@@ -685,6 +685,32 @@ func TestDecode_EmbeddedPointerSquash_FromStructToMap(t *testing.T) {
 	}
 }
 
+func TestDecode_StructAsis(t *testing.T) {
+	t.Parallel()
+
+	input := struct {
+		Basic   Basic  `mapstructure:"basic,asis"`
+		Vunique string `mapstructure:"vunique"`
+	}{
+		Basic:   Basic{},
+		Vunique: "bar",
+	}
+
+	var result map[string]interface{}
+	err := Decode(input, &result)
+	if err != nil {
+		t.Fatalf("got an err: %s", err.Error())
+	}
+
+	if !reflect.DeepEqual(result["basic"], Basic{}) {
+		t.Errorf("basic value should be %#v: %#v", Basic{}, result["basic"])
+	}
+
+	if result["vunique"] != "bar" {
+		t.Errorf("vunique value should be 'bar': %#v", result["vunique"])
+	}
+}
+
 func TestDecode_EmbeddedPointerSquash_FromMapToStruct(t *testing.T) {
 	t.Parallel()
 

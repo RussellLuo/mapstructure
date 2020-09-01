@@ -873,6 +873,9 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 		tagValue := f.Tag.Get(d.config.TagName)
 		keyName := f.Name
 
+		// Any filed will be decoded by default.
+		asis := false
+
 		// If Squash is set in the config, we squash the field down.
 		squash := d.config.Squash && v.Kind() == reflect.Struct && f.Anonymous
 		// Determine the name of the key in the map
@@ -884,6 +887,9 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 			if strings.Index(tagValue[index+1:], "omitempty") != -1 && isEmptyValue(v) {
 				continue
 			}
+
+			// If "asis" is specified in the tag, we don not decode the field.
+			asis = strings.Index(tagValue[index+1:], "asis") != -1
 
 			// If "squash" is specified in the tag, we squash the field down.
 			squash = !squash && strings.Index(tagValue[index+1:], "squash") != -1
@@ -898,9 +904,9 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 			keyName = tagValue
 		}
 
-		switch v.Kind() {
+		switch t := v.Kind(); {
 		// this is an embedded struct, so handle it differently
-		case reflect.Struct:
+		case !asis && t == reflect.Struct:
 			x := reflect.New(v.Type())
 			x.Elem().Set(v)
 
